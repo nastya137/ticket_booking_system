@@ -1,0 +1,12 @@
+package backend;
+
+public enum ClientCommand {
+    GET_PASSENGERS_ADDED_BY_USER,
+    GET_ROUTES_BY_LOCATIONS,
+    GET_ROUTES_BY_TIME,
+    GET_TICKETS,
+    ADD_PASSENGER,
+    FIND_USER_BY_LOGIN,
+    NEW_USER,
+    GET_ROUTE_INFO
+}
