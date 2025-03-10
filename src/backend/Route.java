@@ -4,36 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-class RouteStop implements Serializable{
-    private String stopName;
-    private String stopAddress;
-    private String stopTime;
-    private String stopDuration;
-    public RouteStop(String stopName, String stopAddress, String stopTime,  String stopDuration) {
-        this.stopName = stopName;
-        this.stopAddress = stopAddress;
-        this.stopTime = stopTime;
-        this.stopDuration = stopDuration;
-    }
-    public String getStopName() {
-        return stopName;
-    }
-    public String getStopTime() {
-        return stopTime;
-    }
-    public String getStopDuration() {
-        return stopDuration;
-    }
-    public String getStopAddress() {
-        return stopAddress;
-    }
-    @Override
-    public String toString() {
-        return "RouteStop [stopName=" + stopName + ", stopAddress=" + stopAddress + ", stopTime="+stopTime+", stopDuration="+stopDuration+"]";
-    }
-}
-
 public class Route implements Serializable {
+    private static final long serialVersionUID = 2240724479495358994L;
     //информация из БД для создания экземпляра
     private int route_id;
     private String station_from_name;
@@ -75,6 +47,12 @@ public class Route implements Serializable {
 
     public String getCompany_name() {
         return company_name;
+    }
+    public void setCompany_name(String company_name) {
+        this.company_name = company_name;
+    }
+    public void setRoute_from(String route_from) {
+        this.route_from_name = route_from;
     }
     public String getStationFromName(){
         return station_from_name;
@@ -150,6 +128,18 @@ public class Route implements Serializable {
     }
     public void setPrice_adult(double price_adult){
         this.price_adult = price_adult;
+    }
+    public String getVehicleType(){
+        if (vehicle_type == "B"){
+            return "Автобус";
+        }
+        else if (vehicle_type == "T"){
+            return "Поезд";
+        }
+        else if (vehicle_type == "A"){
+            return "Самолёт";
+        }
+        return "";
     }
     public void setRoute_to_name(String route_to_name) {
         this.route_to_name = route_to_name;

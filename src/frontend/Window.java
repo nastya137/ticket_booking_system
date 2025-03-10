@@ -1,6 +1,7 @@
 package frontend;
 
 import backend.ClientApplication;
+import backend.Route;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,6 +13,8 @@ public class Window extends JFrame {
     private SearchRoutes searchRoutes;
     private RegistrationForm registrationForm;
     private LoginForm loginForm;
+    private RouteInfo info;
+    private CardLayout card;
     public Window(ClientApplication app) {
         JButton routes = new JButton("Поиск рейсов");
         JButton story = new JButton("История заказов");
@@ -21,14 +24,16 @@ public class Window extends JFrame {
         options.add(routes);
         options.add(story);
         options.add(user);
-        CardLayout card = new CardLayout();
+        card = new CardLayout();
         screen = new JPanel(card);
         searchRoutes = new SearchRoutes(app);
         registrationForm = new RegistrationForm(app);
         loginForm = new LoginForm(app);
+        info = new RouteInfo(app);
         screen.add(searchRoutes, "Поиск рейсов");
         screen.add(registrationForm, "Регистрация");
         screen.add(loginForm, "Вход в систему");
+        screen.add(info, "Информация о рейсе");
         routes.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 card.show(screen, "Поиск рейсов");
@@ -52,5 +57,9 @@ public class Window extends JFrame {
     {
         CardLayout layout = (CardLayout)(screen.getLayout());
         layout.show(screen, (String)event.getItem());
+    }
+    public void setRoute(Route route) {
+        info.setRoute(route);
+        card.show(screen, "Информация о рейсе");
     }
 }

@@ -4,7 +4,6 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -150,26 +149,34 @@ public class ServerThread implements Runnable{
             return routes;
     }
 
-    public void getRouteInfo(Route route) {
+    public Route getRouteInfo(Route route) throws IOException {
+        Route r = route;
         ArrayList<ArrayList<String>> databaseRaw;
-        databaseRaw = Server.databasePull("SELECT vehicles.number, vehicles.model, vehicles.brand, routes.price_child, (SELECT points.address from points where points.id = routes.station_from_id)," +
-                "(SELECT points.address from points where points.id = routes.station_to_id), company.contact, (SELECT points.contact from points where points.id = routes.station_from_id)," +
-                "(SELECT points.contact from points where points.id = routes.station_to_id)" +
-                "FROM routes" +
+        databaseRaw = Server.databasePull("SELECT vehicles.number, vehicles.model, vehicles.brand, routes.price_child, (SELECT points.address from points where points.id = routes.station_from_id), " +
+                "(SELECT points.address from points where points.id = routes.station_to_id), company.contact, (SELECT points.contact from points where points.id = routes.station_from_id), " +
+                "(SELECT points.contact from points where points.id = routes.station_to_id) " +
+                "FROM routes " +
                 "Join points ON points.id = routes.station_from_id " +
-                "Join points as p ON p.id = routes.station_to_id\n" +
+                "Join points as p ON p.id = routes.station_to_id " +
                 "JOIN company ON company.company_id = routes.company_id " +
                 "JOIN vehicles ON vehicles.id = routes.vehicle_id " +
                 "where routes.id = "+route.getId());
+        System.out.println(route.getId()+" Получены данные рейса");
+        for (ArrayList<String> strings : databaseRaw) {
+            for (String string : strings) {
+                System.out.println(string);
+            }
+        }
         route.setVehicle_number(databaseRaw.get(0).get(0));
         route.setVehicle_model(databaseRaw.get(0).get(1)==null?"":databaseRaw.get(0).get(1));
         route.setVehicle_brand(databaseRaw.get(0).get(2)==null?"":databaseRaw.get(0).get(2));
-        route.setPrice_child(Double.parseDouble(databaseRaw.get(0).get(3)));
-        route.setRoute_from_address(databaseRaw.get(0).get(4));
-        route.setRoute_to_address(databaseRaw.get(0).get(5));
+        route.setPrice_child(Double.parseDouble(databaseRaw.getFirst().get(3)));
+        route.setRoute_from_address(databaseRaw.getFirst().get(4));
+        route.setRoute_to_address(databaseRaw.getFirst().get(5));
         route.setCompany_contact(databaseRaw.get(0).get(6));
         route.setStation_from_contact(databaseRaw.get(0).get(7));
         route.setStation_to_contact(databaseRaw.get(0).get(8));
+        return route;
     }
 
     // SELECT vehicles.number, vehicles.model, vehicles.brand, routes.price_child, (SELECT points.address from points where points.id = routes.station_from_id),
@@ -265,6 +272,8 @@ public class ServerThread implements Runnable{
                     else {
                         response.sendRouteList(getRoutesByLocations(message.recieveFrom(), message.recieveTo(), message.recieveType()));
                     }
+                }else if (message.Command() == ClientCommand.GET_PASSENGERS_ADDED_BY_USER) {
+                    response.sendRoute(getRouteInfo(message.recieveRoute()));//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 }
                 else if (message.Command() == ClientCommand.GET_TICKETS) {
                 response.sendTicketList(getTicketsByRoute(message.recieveRouteId()));
@@ -279,7 +288,7 @@ public class ServerThread implements Runnable{
                 response.sendUser(message.recieveUser());
                 }
                 else if (message.Command() == ClientCommand.GET_ROUTE_INFO){
-                    response.sendRoute(message.recieveRoute());
+                    response.sendRoute(getRouteInfo(message.recieveRoute()));
                 }
                 println("Sent " + response + " To Client.");
                 packetOutputStream.writeObject(response);

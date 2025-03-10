@@ -19,7 +19,7 @@ import static javax.swing.WindowConstants.EXIT_ON_CLOSE;
 
 
 class RouteLabel extends JPanel {//Содержит начальную информацию о рейсе
-    public RouteLabel(Route route) throws ParseException {
+    public RouteLabel(Route route, ClientApplication app) throws ParseException {
         super(new GridLayout(3, 2));
         JLabel time_start = new JLabel(route.getStarts_at());
         this.add(time_start);
@@ -38,7 +38,11 @@ class RouteLabel extends JPanel {//Содержит начальную инфо�
         JButton buy = new JButton("Купить билет");
         buy.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                System.out.println("buy");
+                UserService request = new UserService(ClientCommand.GET_ROUTE_INFO);
+                request.sendRoute(route);
+                UserService response = app.talkToServer(request);
+                Route r = response.recieveRoute();
+                app.gui.setRoute(r);
             }
         });
         this.add(buy);
@@ -139,9 +143,10 @@ public class SearchRoutes extends JPanel {
             RoutePanel.removeAll();
             if (!routes.isEmpty()) {
                 for (Route route : routes) {
+                    route.setRoute_from(city_from.getText());
                     RouteLabel routeLabel = null;
                     try {
-                        routeLabel = new RouteLabel(route);
+                        routeLabel = new RouteLabel(route, app);
                         System.out.println(route.toString());
                     } catch (ParseException ex) {
                         throw new RuntimeException(ex);

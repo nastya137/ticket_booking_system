@@ -21,7 +21,7 @@ public class ClientApplication implements Serializable {
     private ObjectOutputStream packetOutputStream;
     private ObjectInputStream packetInputStream;
     private User currentUser;
-    private Window gui;
+    public Window gui;
     //Конструктор приложения
     private ClientApplication() {}
 
