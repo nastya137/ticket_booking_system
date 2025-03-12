@@ -1,4 +1,4 @@
-package backend;
+package server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -53,7 +53,7 @@ public class Server {
 
     //Ввод новых данных в БД
     public synchronized static void databasePush(String sqlCommand) {
-        try (Connection conn = accessDatabase(); // auto close the connection object after try
+        try (Connection conn = accessDatabase();
              PreparedStatement prep = conn.prepareStatement(sqlCommand)) {
             prep.execute();
         } catch (SQLException ex) {
@@ -64,25 +64,25 @@ public class Server {
     //Запуск сервера, создание потоков
     @SuppressWarnings("InfiniteLoopStatement")
     private static void runServer() {
-        java.lang.System.out.println("backend.Server: Launched System.");
+        java.lang.System.out.println("server.Server: Launched System.");
         reservedRouteIDs = new ArrayList<>();
 
         try (ServerSocket serverSocket = new ServerSocket(2000)) {
             //noinspection InfiniteLoopStatement
             while (true) {
-                java.lang.System.out.println("backend.Server: Ready for Clients.");
+                java.lang.System.out.println("server.Server: Ready for Clients.");
                 try {
                     Socket socket = serverSocket.accept();
                     ServerThread clientThread = new ServerThread(socket);
                     Thread connectionThread = new Thread(clientThread);
                     connectionThread.start();
                 } catch (IOException ex) {
-                    java.lang.System.out.println("ERROR: backend.Server Failed to Connect to a Client!!!");
+                    java.lang.System.out.println("ERROR: server.Server Failed to Connect to a Client!!!");
                 }
             }
         } catch (IOException ex) {
             Logger.getLogger(System.class.getName()).log(Level.SEVERE, null, ex);
-            java.lang.System.out.println("backend.Server: Halted System.");
+            java.lang.System.out.println("server.Server: Halted System.");
         }
     }
 

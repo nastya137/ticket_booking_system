@@ -3,6 +3,7 @@ package backend;
 import java.io.Serializable;
 
 public class Ticket implements Serializable {
+    private static final long serialVersionUID = -6125269480840690582L;
     private int id;
     private int route_id;
     private int seat_id;
@@ -43,13 +44,17 @@ public class Ticket implements Serializable {
     public void setIs_upper(Boolean is_upper) {
         this.is_upper = is_upper;
     }
+    public int getSeat_id (){
+        return seat_id;
+    }
+
     @Override
     public String toString() {
         if (carriage_type != null) {
-            return carriage_type + " " + carriage_number + " " + this.seat_number+" "+((this.is_upper)?"Верхняя":"Нижняя");
+            return (carriage_type=="2"?"Плацкарт":"Купе") + " " + (carriage_number) + " вагон " + this.seat_number+" место ("+((this.is_upper)?"верхняя":"нижняя")+" полка)";
         }
-        else{
-        return this.seat_number;
+        else {
+        return "Место №"+this.seat_number;
         }
     }
 }

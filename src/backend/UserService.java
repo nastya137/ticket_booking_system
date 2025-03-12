@@ -1,6 +1,7 @@
 package backend;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 
 //Класс для обмена данными
@@ -20,10 +21,24 @@ public class UserService implements Serializable {
     private List<Ticket> tickets;
     private Route route;
     private int route_id;
+    private Boolean status;
+    private HashMap<Passenger, Ticket> passengerTickets;
+    private Order order;
 
-    public UserService() {}
+    public UserService() {
+        passengerTickets = new HashMap<>();
+    }
     public UserService(ClientCommand command) {
         this.command = command;
+    }
+    public void addPassengerTickets(Passenger passenger, Ticket ticket) {
+        passengerTickets.put(passenger, ticket);
+    }
+    public HashMap<Passenger, Ticket> getPassengerTickets() {
+        return passengerTickets;
+    }
+    public void removePassengerTickets(Passenger passenger) {
+        passengerTickets.remove(passenger);
     }
     public ClientCommand Command() {
         return command;
@@ -33,6 +48,12 @@ public class UserService implements Serializable {
     }
     public int recieveId (){
         return id;
+    }
+    public Boolean recieveStatus(){
+        return status;
+    }
+    public void sendStatus(Boolean status) {
+        this.status = status;
     }
     public void sendRouteId (int id) {
         this.route_id = id;
@@ -91,6 +112,7 @@ public class UserService implements Serializable {
     public User recieveUser() {
         return user;
     }
+
     public void sendUser (User user) {
         this.user = user;
     }
@@ -105,5 +127,11 @@ public class UserService implements Serializable {
     }
     public Route recieveRoute () {
         return route;
+    }
+    public void sendOrder (Order order) {
+        this.order = order;
+    }
+    public Order recieveOrder () {
+        return order;
     }
 }

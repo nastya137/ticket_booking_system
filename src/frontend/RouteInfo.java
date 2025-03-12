@@ -12,14 +12,17 @@ import java.util.ArrayList;
 public class RouteInfo extends JPanel {
     private java.util.List<Passenger> passengerList;
     private JPanel passengers;
+    private java.util.List<PassengerPanel> passengersPanels;
+    private Route route;
     private double price;
-    public RouteInfo(ClientApplication app) {
+    private java.util.List<Ticket> ticketList;
+    public RouteInfo(ClientApplication app, Route route) {
         price = 0.0;
         this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-    }
-    public void setRoute(Route route) {
         this.removeAll();
+        this.route = route;
         passengerList = new ArrayList<>();
+        passengersPanels = new ArrayList<>();
         //Основная информация о рейсе
         JPanel routeInfo = new JPanel();
         routeInfo.setLayout(new BoxLayout(routeInfo, BoxLayout.Y_AXIS));
@@ -61,6 +64,7 @@ public class RouteInfo extends JPanel {
                 p.setVisible(true);
                 p.setMaximumSize(p.getSize());
                 p.setMinimumSize(p.getSize());
+                passengersPanels.add(p);
                 passengers.add(p);
                 passengers.revalidate();
             }
@@ -83,13 +87,40 @@ public class RouteInfo extends JPanel {
         reserveButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 //бронь
+                Boolean allFieldsFilled = true;
+                for (PassengerPanel p: passengersPanels){
+                    allFieldsFilled = allFieldsFilled&&p.fieldsNotInitial();
+                    //System.out.println(fi);
+                }
+                if (allFieldsFilled) {
+                    UserService reserve = new UserService(ClientCommand.RESERVE_TICKETS);
+                    for (PassengerPanel p: passengersPanels){
+                        Passenger passenger = p.createPassenger();
+                        reserve.addPassengerTickets(passenger, p.getTicket());
+                    }
+                    UserService response = app.talkToServer(reserve);
+                    if (response.recieveStatus())  JOptionPane.showMessageDialog(null, "Заказ выполнен!");
 
+                }
+                else {
+                    JOptionPane.showMessageDialog(null, "Заполните все поля!");
+                }
             }
         });
         JButton buyButton = new JButton("Купить");
         buyButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 //покупка
+                Boolean allFieldsFilled = true;
+                for (PassengerPanel p: passengersPanels){
+                    allFieldsFilled = allFieldsFilled&&p.fieldsNotInitial();
+                }
+                if (allFieldsFilled) {
+
+                }
+                else {
+                    JOptionPane.showMessageDialog(null, "Заполните все поля!");
+                }
             }
         });
         buttons.add(reserveButton);
@@ -101,8 +132,9 @@ public class RouteInfo extends JPanel {
         passengers.setLayout(new BoxLayout(passengers, BoxLayout.Y_AXIS));
         final JScrollPane scrollPane = new JScrollPane(passengers, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.getViewport().add(passengers);
-
         passengers.setSize(800, 350);
+
+        //Деление экрана
         JSplitPane sp1 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, new JScrollPane(passengers), buy);
         JSplitPane sp0 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, routeInfo, sp1);
         sp1.setResizeWeight(0.9999);
@@ -110,8 +142,20 @@ public class RouteInfo extends JPanel {
         routeInfo.setBorder(BorderFactory.createLineBorder(Color.BLACK));
     }
 
+
+    public String[] getTickets(){
+        String [] tickets = new String[this.route.getTickets().size()];
+        int i = 0;
+        for (Ticket ticket:this.route.getTickets()){
+            tickets[i]=ticket.toString();
+            i++;
+        }
+        return tickets;
+    }
+
     public void deletePassengerPanel (PassengerPanel p) {
         passengers.remove(p);
         passengers.revalidate();
+        passengers.repaint();
     }
 }

@@ -9,13 +9,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Scanner;
-
-import static javax.swing.WindowConstants.EXIT_ON_CLOSE;
 
 
 class RouteLabel extends JPanel {//Содержит начальную информацию о рейсе
@@ -41,8 +36,13 @@ class RouteLabel extends JPanel {//Содержит начальную инфо�
                 UserService request = new UserService(ClientCommand.GET_ROUTE_INFO);
                 request.sendRoute(route);
                 UserService response = app.talkToServer(request);
+                UserService ticketsrequest = new UserService(ClientCommand.GET_TICKETS);
+                ticketsrequest.sendRouteId(route.getId());
+                UserService ticketsresponse = app.talkToServer(ticketsrequest);
                 Route r = response.recieveRoute();
-                app.gui.setRoute(r);
+                r.setTickets(ticketsresponse.recieveTicketList());
+                app.gui.setRoute(r, app);
+
             }
         });
         this.add(buy);

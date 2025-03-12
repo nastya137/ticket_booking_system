@@ -8,5 +8,9 @@ public enum ClientCommand {
     ADD_PASSENGER,
     FIND_USER_BY_LOGIN,
     NEW_USER,
-    GET_ROUTE_INFO
+    GET_ROUTE_INFO,
+    RESERVE_TICKETS,
+    BUY_TICKETS,
+    CANCEL_ORDER,
+    SELECT_TICKET
 }

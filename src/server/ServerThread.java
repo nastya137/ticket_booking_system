@@ -1,9 +1,13 @@
-package backend;
+package server;
+
+import backend.*;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,7 +37,7 @@ public class ServerThread implements Runnable{
 
     //Вывод сообщения от сервера
     private void println(String message) {
-        java.lang.System.out.println("backend.Server (thread " + connectionNumber + "): " + message);
+        java.lang.System.out.println("server.Server (thread " + connectionNumber + "): " + message);
     }
 
 
@@ -179,16 +183,6 @@ public class ServerThread implements Runnable{
         return route;
     }
 
-    // SELECT vehicles.number, vehicles.model, vehicles.brand, routes.price_child, (SELECT points.address from points where points.id = routes.station_from_id),
-    //(SELECT points.address from points where points.id = routes.station_to_id), company.contact, (SELECT points.contact from points where points.id = routes.station_from_id),
-    //(SELECT points.contact from points where points.id = routes.station_to_id)
-    //FROM routes
-    //Join points ON points.id = routes.station_from_id
-    //Join points as p ON p.id = routes.station_to_id
-    //JOIN company ON company.company_id = routes.company_id
-    //JOIN vehicles ON vehicles.id = routes.vehicle_id
-
-
     //Получает свободные билеты на рейс
     public List<Ticket> getTicketsByRoute(int route_id) {
         ArrayList<ArrayList<String>> databaseRaw;
@@ -209,12 +203,15 @@ public class ServerThread implements Runnable{
                         databaseRaw.get(i).get(3),
                         databaseRaw.get(i).get(4),
                         databaseRaw.get(i).get(5));
-                t.setCarriage_number(Integer.parseInt(databaseRaw.get(i).get(6)));
-                t.setCarriage_type(databaseRaw.get(i).get(7));
-                t.setIs_upper(Boolean.parseBoolean(databaseRaw.get(i).get(8)));
+                t.setSeat_number(databaseRaw.get(i).get(6));
+            if (databaseRaw.get(i).get(7)!=null) t.setCarriage_number(Integer.parseInt(databaseRaw.get(i).get(7)));
+                t.setCarriage_type(databaseRaw.get(i).get(8));
+                t.setIs_upper(Boolean.parseBoolean(databaseRaw.get(i).get(9)));
                 tickets.add(t);
-
             }
+        for (backend.Ticket ticket : tickets) {
+            System.out.println(ticket);
+        }
             return tickets;
 
     }
@@ -231,8 +228,7 @@ public class ServerThread implements Runnable{
         ArrayList<ArrayList<String>> databaseRaw;
         databaseRaw = Server.databasePull("SELECT * FROM users WHERE login = '" + login + "'"
         );
-
-            if (databaseRaw.isEmpty()) {
+            if (!databaseRaw.isEmpty()) {
                 User user = new User(
                         databaseRaw.get(0).get(1),
                         databaseRaw.get(0).get(2),
@@ -245,12 +241,52 @@ public class ServerThread implements Runnable{
     }
 
     //Сохраняет нового пользователя
-    public void saveNewUser(User user) {
-        ArrayList<ArrayList<String>> databaseRaw;
-        databaseRaw = Server.databasePull("INSERT INTO users(`login`, `password`, `email`, `phone_number`) " +
+    public User saveNewUser(User user) {
+        Server.databasePush("INSERT INTO users(`login`, `password`, `email`, `phone_number`) " +
                         "VALUES("+user.getLogin()+", "+user.getPassword()+", "+user.getEmail()+", "+user.getPhone()+")");
+        return user;
     }
 
+    //Покупка билета
+    public void buyTicket(Ticket ticket, Passenger passenger, Route route, String order_id) {
+        Server.databasePush("UPDATE tickets " +
+                "SET passenger_id = "+passenger.getId()+ ", order_datetime = strftime('%Y-%m-%d %H:%M:%S', datetime('now')), status = 'B', order_id = "+order_id+ " WHERE route_id = "+route.getId()+" AND seat_id = "+ticket.getSeat_id());
+    }
+    //Выбор билета в меню. Если билет выбран, он не допускается к заказу ближайшие 15 минут.
+    public boolean selectTicket(Ticket ticket, Route route) {
+        Server.databasePull("UPDATE tickets " +
+                "SET order_datetime = strftime('%Y-%m-%d %H:%M:%S', datetime('now')) WHERE route_id = "+route.getId()+" AND seat_id = "+ticket.getSeat_id());
+        return true;
+    }
+
+    //Бронь билета
+    public void reserveTicket(Ticket ticket, Passenger passenger, Route route, String order_id) {
+        Server.databasePull("UPDATE tickets " +
+                "SET passenger_id = "+passenger.getId()+ ", order_datetime = strftime('%Y-%m-%d %H:%M:%S', datetime('now')), status = 'R', order_id = "+order_id+ " WHERE route_id = "+route.getId()+" AND seat_id = "+ticket.getSeat_id());
+    }
+    //Выполнение заказа
+    public boolean reserveTickets(HashMap<Passenger, Ticket> tickets, Route route, User user) {
+        String uniqueID = UUID.randomUUID().toString();
+        double sum = 0;
+        for (Passenger passenger : tickets.keySet()) {
+            addPassenger(passenger);
+            reserveTicket(tickets.get(passenger), passenger, route, uniqueID);
+            sum+=route.getPrice_adult();
+            //Требуемая доработка: учесть для детского билета!
+        }
+        Server.databasePull("INSERT INTO orders SET id = " + uniqueID + ", datetime = strftime('%Y-%m-%d %H:%M:%S', datetime('now')), user_id = "+ user.getId()+
+                ", status = 'R', sum = " + sum + ", currency_unit = "+route.getCurrencyUnit());
+        return true;
+    }
+
+    //Отмена заказа
+    public Order cancelOrder(Order order) {
+        Server.databasePull("UPDATE orders SET status = 'C' WHERE id = " + order.getId());
+        Server.databasePull("UPDATE tickets " +
+                "SET passenger_id = NULL, order_datetime = NULL, status = NULL, order_id = NULL WHERE order_id = "+order.getId());
+        order.setStatus("C");
+        return order;
+    }
 
     //Запуск процесса
     @Override
@@ -282,13 +318,22 @@ public class ServerThread implements Runnable{
                 response.sendPassenger(message.recievePassenger());
                 }
                 else if (message.Command() == ClientCommand.FIND_USER_BY_LOGIN) {
-                response.sendUser(message.recieveUser());
+                response.sendUser(findByLogin(message.recieveUser().getLogin()));
                 }
                 else if (message.Command() == ClientCommand.NEW_USER) {
-                response.sendUser(message.recieveUser());
+                response.sendUser(saveNewUser(message.recieveUser()));
                 }
                 else if (message.Command() == ClientCommand.GET_ROUTE_INFO){
                     response.sendRoute(getRouteInfo(message.recieveRoute()));
+                }
+                else if (message.Command() == ClientCommand.SELECT_TICKET){
+                    response.sendStatus(selectTicket(message.recieveTicketList().getFirst(), message.recieveRoute()));
+                }
+                else if (message.Command() == ClientCommand.RESERVE_TICKETS) {
+                    response.sendStatus(reserveTickets(message.getPassengerTickets(), message.recieveRoute(), message.recieveUser()));
+                }
+                else if (message.Command() == ClientCommand.CANCEL_ORDER) {
+                    response.sendOrder(cancelOrder(message.recieveOrder()));
                 }
                 println("Sent " + response + " To Client.");
                 packetOutputStream.writeObject(response);
@@ -308,5 +353,4 @@ public class ServerThread implements Runnable{
             }
         }
     }
-    //endregion
 }

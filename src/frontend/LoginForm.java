@@ -14,6 +14,7 @@ public class LoginForm extends JPanel {
     private JTextField login;;
     private JPasswordField password;
     private JButton btnNewButton;
+    private JButton btnRegister;
     public LoginForm(ClientApplication app) {
     setLocation(100, 100);
     setSize(500, 400);
@@ -29,14 +30,40 @@ public class LoginForm extends JPanel {
         p.add(lpassword, BorderLayout.WEST);
         p.add(password, BorderLayout.EAST);
 
-    btnNewButton = new JButton("Регистрация");
+    btnNewButton = new JButton("Вход");
         btnNewButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            System.out.println("ok");
+            String text = "";
+            if (!(login.getText() == null || login.getText().trim().isEmpty())&&!(password.getText() == null || password.getText().trim().isEmpty())) {
+                User user = new User(login.getText(), new String(password.getPassword()));
+                UserService request = new UserService(ClientCommand.FIND_USER_BY_LOGIN);
+                request.sendUser(user);
+                UserService response = app.talkToServer(request);
+                if ((response.recieveUser() != null)&&(( response.recieveUser().getLogin().equals(login.getText()) )&&( response.recieveUser().getPassword().equals(password.getText()) ))) {
+                    app.setCurrentUser(response.recieveUser());
+                    System.out.println((response.recieveUser().getLogin())+" "+response.recieveUser().getPassword());
+                    JOptionPane.showMessageDialog(null, "Вход выполнен успешно!");
+                    app.gui.itemStateChanged("Текущий пользователь");
+                }
+                else {
+                    JOptionPane.showMessageDialog(null, "Пользователь не найден. Проверьте правильность ввода пароля и логина. Также Вы можете создать новую учётную запись.");
+                }
+            }
+            else {
+                JOptionPane.showMessageDialog(null, "Введите логин и пароль!");
+            }
+
         }
     });
         btnNewButton.setFont(new Font("Tahoma", Font.PLAIN, 14));
         p.add(btnNewButton, BorderLayout.SOUTH);
+        btnRegister = new JButton("Нет учётной записи? Зарегистрироваться");
+        btnRegister.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                app.gui.itemStateChanged("Регистрация");
+            }
+        });
+        p.add(btnRegister, BorderLayout.EAST);
     JPanel flow = new JPanel(new FlowLayout(FlowLayout.LEFT));
         flow.add(p);
         this.add(flow, BorderLayout.NORTH);

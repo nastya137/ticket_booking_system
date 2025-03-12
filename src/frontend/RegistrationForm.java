@@ -18,6 +18,7 @@ public class RegistrationForm extends JPanel {
     private JPasswordField password;
     private JPasswordField conpassword;
     private JButton btnNewButton;
+    private JButton btnLogin;
     private JLabel log;
 
     public String getErrorMessage(){
@@ -91,6 +92,7 @@ public class RegistrationForm extends JPanel {
                         }
                         else {
                             text = "Регистрация прошла успешно";
+                            app.gui.itemStateChanged("Вход в систему");
                         }
                     }
                     else {
@@ -102,6 +104,13 @@ public class RegistrationForm extends JPanel {
         });
         btnNewButton.setFont(new Font("Tahoma", Font.PLAIN, 14));
         p.add(btnNewButton, BorderLayout.SOUTH);
+        btnLogin = new JButton("Уже есть учётная запись? Войти");
+        btnLogin.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                app.gui.itemStateChanged("Вход в систему");
+            }
+        });
+        p.add(btnLogin, BorderLayout.EAST);
         JPanel flow = new JPanel(new FlowLayout(FlowLayout.LEFT));
         flow.add(p);
         this.add(flow, BorderLayout.NORTH);

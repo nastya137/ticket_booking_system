@@ -1,16 +1,12 @@
 package backend;
 
-import frontend.RegistrationForm;
-import frontend.SearchRoutes;
 import frontend.Window;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,12 +29,10 @@ public class ClientApplication implements Serializable {
             socket = new Socket("127.0.0.1", 2000);//локальный сервер
             packetOutputStream = new ObjectOutputStream(socket.getOutputStream());
             packetInputStream = new ObjectInputStream(socket.getInputStream());
-            ///guiWindow.printLog(MessageType.STATUS,"backend.Server Connected");
             System.out.println("Successfully connected to server");
             return true;
         } catch (IOException ex) {
             Logger.getLogger(ClientApplication.class.getName()).log(Level.SEVERE, null, ex);
-            ///guiWindow.printLog(MessageType.ERROR,ex.toString());
             System.out.println("Failed to connect to server "+ex.toString());
             return false;
         }
@@ -90,6 +84,9 @@ public class ClientApplication implements Serializable {
         if (currentUser != null&&this.currentUser==null) {
             this.currentUser = currentUser;
         }
+    }
+    public User getCurrentUser() {
+        return currentUser;
     }
 
 
